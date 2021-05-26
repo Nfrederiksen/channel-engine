@@ -253,7 +253,7 @@ class Session {
     }  
   }
 
-  async getCurrentAudioManifestAsync(audioGroupId, audioLanguage, playbackSessionId) {// <-------------- BEEN HERE
+  async getCurrentAudioManifestAsync(audioGroupId, audioLanguage, playbackSessionId) {
     const sessionState = await this._sessionStateStore.get(this._sessionId);
     const playheadState = await this._playheadStateStore.get(this._sessionId);
     const currentVod = this.getCurrentVod(sessionState);
