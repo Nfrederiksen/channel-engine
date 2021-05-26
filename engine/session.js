@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const debug = require('debug')('engine-session');
-const HLSVod = require('@eyevinn/hls-vodtolive');
+//const HLSVod = require('@eyevinn/hls-vodtolive');
+const HLSVod = require("../../hls-vodtolive/index.js"); // HLSVod with multi audio track support.
 const m3u8 = require('@eyevinn/m3u8');
 const HLSRepeatVod = require('@eyevinn/hls-repeat');
 const HLSTruncateVod = require('@eyevinn/hls-truncate');
