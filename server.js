@@ -9,7 +9,7 @@ class RefAssetManager {
     this.assets = {
       '1': [
         { 
-          id: 1, title: "OTTera test VOD 1", uri: "https://cdnapisec.kaltura.com/p/513551/sp/51355100/playManifest/entryId/1_fpsqsbf4/format/applehttp/protocol/https/flavorIds/1_7lbzn50a,1_9bvnxo63,1_j873iic0,1_j9w5phf3,1_nwwuphp4,1_09sf9wgp/preferredBitrate/1800/maxBitrate/2800/defaultAudioLang/en/a.m3u8
+          id: 1, title: "OTTera test VOD 1", uri: "https://cdnapisec.kaltura.com/p/513551/sp/51355100/playManifest/entryId/1_fpsqsbf4/format/applehttp/protocol/https/flavorIds/1_7lbzn50a,1_9bvnxo63,1_j873iic0,1_j9w5phf3,1_nwwuphp4,1_09sf9wgp/preferredBitrate/1800/maxBitrate/2800/defaultAudioLang/en/a.m3u8",
           //id: 1, title: "Tears of Steel", uri: "https://maitv-vod.lab.eyevinn.technology/tearsofsteel_4k.mov/master.m3u8"
         },
         { 
@@ -70,7 +70,7 @@ class RefChannelManager {
       { bw: 1313000, codecs: 'avc1.4d001f,mp4a.40.2', resolution: [ 480, 214 ] }
     ];
   }
-  
+
   _getAudioTracks() {
     return [
       { language: "en", name: "English", default: true  },
@@ -94,6 +94,7 @@ const engineOptions = {
   defaultSlateUri: "https://maitv-vod.lab.eyevinn.technology/slate-consuo.mp4/master.m3u8",
   slateRepetitions: 10,
   redisUrl: process.env.REDIS_URL,
+  useDemuxedAudio: true,
 };
 
 const engine = new ChannelEngine(refAssetManager, engineOptions);
