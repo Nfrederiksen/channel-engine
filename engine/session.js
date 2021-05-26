@@ -65,6 +65,9 @@ class Session {
       if (config.profile) {
         this._sessionProfile = config.profile;
       }
+      if (config.audioTracks) {// Added audioTracks property <------------------------------------- BEEN HERE
+        this._audioTracks = config.audioTracks;
+      }
       if (config.closedCaptions) {
         this._closedCaptions = config.closedCaptions;
       }
@@ -250,13 +253,25 @@ class Session {
     }  
   }
 
-  async getCurrentAudioManifestAsync(audioGroupId, playbackSessionId) {
+  async getCurrentAudioManifestAsync(audioGroupId, audioLanguage, playbackSessionId) {// <-------------- BEEN HERE
     const sessionState = await this._sessionStateStore.get(this._sessionId);
     const playheadState = await this._playheadStateStore.get(this._sessionId);
     const currentVod = this.getCurrentVod(sessionState);
     if (currentVod) {
-      const m3u8 = currentVod.getLiveMediaAudioSequences(playheadState.mediaSeq, audioGroupId, playheadState.vodMediaSeqAudio, sessionState.discSeq);
-      debug(`[${playbackSessionId}]: [${playheadState.mediaSeq + playheadState.vodMediaSeqAudio}] Current audio manifest for ${audioGroupId} requested`);
+      let m3u8 = currentVod.getLiveMediaAudioSequences(
+        playheadState.mediaSeq,
+        audioGroupId,
+        audioLanguage,// <------------------- BEEN HERE
+        playheadState.vodMediaSeqAudio,
+        sessionState.discSeq
+      );
+      // # Case: current VOD does not have the selected language.
+      if(!m3u8){
+      // # Perhaps...
+      // # Handle by fetching another language?
+      }
+
+      debug(`[${playbackSessionId}]: [${playheadState.mediaSeq + playheadState.vodMediaSeqAudio}] Current audio manifest for ID:${audioGroupId}, Lang:${audioLanguage} requested`);
       return m3u8;
     } else {
       return "Engine not ready";
@@ -355,7 +370,7 @@ class Session {
     }
   }
 
-  async getAudioManifestAsync(audioGroupId, opts) {
+  async getAudioManifestAsync(audioGroupId, audioLanguage, opts) {
     const tsLastRequestAudio = await this._sessionStateStore.get(this._sessionId).tsLastRequestAudio;
     let timeSinceLastRequest = (tsLastRequestAudio === null) ? 0 : Date.now() - tsLastRequestAudio;
 
@@ -372,19 +387,26 @@ class Session {
       }
     }
 
-    debug(`[${this._sessionId}]: AUDIO ${timeSinceLastRequest} (${this.averageSegmentDuration}) audioGroupId=${audioGroupId} vodMediaSeq=(${sessionState.vodMediaSeqVideo}_${sessionState.vodMediaSeqAudio})`);
+    debug(`[${this._sessionId}]: AUDIO ${timeSinceLastRequest} (${this.averageSegmentDuration}) audioGroupId=${audioGroupId} audioLanguage=${audioLanguage} vodMediaSeq=(${sessionState.vodMediaSeqVideo}_${sessionState.vodMediaSeqAudio})`);
     let m3u8;
     try {
-      m3u8 = currentVod.getLiveMediaAudioSequences(sessionState.mediaSeq, audioGroupId, sessionState.vodMediaSeqAudio, sessionState.discSeq);
-    } catch (exc) {
-      if (sessionState.lastM3u8[audioGroupId]) {
-        m3u8 = sessionState.lastM3u8[audioGroupId];
+      m3u8 = currentVod.getLiveMediaAudioSequences(
+        sessionState.mediaSeq,
+        audioGroupId,
+        audioLanguage,// <---------------- BEEN HERE
+        sessionState.vodMediaSeqAudio,
+        sessionState.discSeq
+      );
+    } catch (exc) { // <-------------- BEEN HERE
+      if (sessionState.lastM3u8[audioGroupId][audioLanguage]) {
+         m3u8 = sessionState.lastM3u8[audioGroupId][audioLanguage];
       } else {
-        throw new Error('Failed to generate audio manifest');
+        throw new Error("Failed to generate audio manifest");
       }
     }
     let lastM3u8 = sessionState.lastM3u8;
-    lastM3u8[audioGroupId] = m3u8;
+    lastM3u8[audioGroupId] = {}; // <-------------- BEEN HERE
+    lastM3u8[audioGroupId][audioLanguage] = m3u8;
     sessionState = await this._sessionStateStore.set(this._sessionId, "lastM3u8", lastM3u8);
     sessionState = await this._sessionStateStore.set(this._sessionId, "tsLastRequestAudio", Date.now());
     return m3u8;
@@ -413,9 +435,21 @@ class Session {
       if (audioGroupIds.length > 0) {
         m3u8 += "# AUDIO groups\n";
         for (let i = 0; i < audioGroupIds.length; i++) {
-          let audioGroupId = audioGroupIds[i];
-          m3u8 += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audioGroupId}",NAME="audio",AUTOSELECT=YES,DEFAULT=YES,CHANNELS="2",URI="master-${audioGroupId}.m3u8;session=${this._sessionId}"\n`;
+          let audioGroupId = audioGroupIds[i]; 
+          // <-------------------- I'VE BEEN HERE
+          // # Added nested loop to iterate through 
+          // # pre-set languages(_audioTracks) by channelMgr.
+          for (let j = 0; j < this._audioTracks.length; j++) {
+            let audioTrack = this._audioTracks[j];
+            // Make default track if set property is true.
+            if (audioTrack.default) {
+              m3u8 += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audioGroupId}",LANGUAGE="${audioTrack.language}", NAME="${audioTrack.name}",AUTOSELECT=YES,DEFAULT=YES,CHANNELS="2",URI="master-${audioGroupId}_${audioTrack.language}.m3u8;session=${this._sessionId}"\n`;
+            } else {
+              m3u8 += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audioGroupId}",LANGUAGE="${audioTrack.language}", NAME="${audioTrack.name}",AUTOSELECT=YES,DEFAULT=NO,CHANNELS="2",URI="master-${audioGroupId}_${audioTrack.language}.m3u8;session=${this._sessionId}"\n`;
+            }
+          }
         }
+        // As of now, by default set StreamItem's AUDIO attribute to <first audio group-id>
         defaultAudioGroupId = audioGroupIds[0];
       }
     }
@@ -431,11 +465,19 @@ class Session {
         m3u8 += "master" + profile.bw + ".m3u8;session=" + this._sessionId + "\n";
       });
     }
+    // - This part makes back-up uri in StreamItem? In case above audio tracks are missing uri attribute? 
+    // <----------------------------------- I'VE BEEN HERE
+    // # Added nested loop to iterate through 
+    // # pre-set languages(_audioTracks) by channelMgr.
     if (this.use_demuxed_audio === true) {
+      m3u8 += "# AUDIO stream items with uri\n";
       for (let i = 0; i < audioGroupIds.length; i++) {
         let audioGroupId = audioGroupIds[i];
-        m3u8 += `#EXT-X-STREAM-INF:BANDWIDTH=97000,CODECS="mp4a.40.2",AUDIO="${audioGroupId}"\n`;
-        m3u8 += `master-${audioGroupId}.m3u8;session=${this._sessionId}\n`;
+        for (let j = 0; j < this._audioTracks.length; j++) {
+          let audioTrack = this._audioTracks[j];
+          m3u8 += `#EXT-X-STREAM-INF:BANDWIDTH=97000,CODECS="mp4a.40.2",AUDIO="${audioGroupId}"\n`;
+          m3u8 += `master-${audioGroupId}_${audioTrack.language}.m3u8;session=${this._sessionId}\n`;
+        }
       }
     }
     this.produceEvent({
