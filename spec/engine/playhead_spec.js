@@ -35,7 +35,6 @@ class TestAssetManager {
         resolve(vod);
       }
     });
-
   }
 }
 
@@ -115,7 +114,7 @@ describe("Playhead consumer", () => {
     };  
   });
 
-  it("continously increases media sequence over two VOD switches", async (done) => {
+  it("continously increases media sequence over two VOD switches", async () => {
     const assetMgr = new TestAssetManager();
     const session = new Session(assetMgr, { sessionId: '1' }, sessionStore);
     const loop = async (increments) => {
@@ -142,24 +141,21 @@ describe("Playhead consumer", () => {
       }
     };
     await loop(100);
-    done();
   });
 
-  it("never get the same top segment after media sequence is increased", async (done) => {
+  it("never get the same top segment after media sequence is increased", async () => {
     const assetMgr = new TestAssetManager();
     const session = new Session(assetMgr, { sessionId: '1' }, sessionStore);
     await verificationLoop(session, 10);
-    done();
   });
 
-  it("can handle three short VODs in a row", async (done) => {
+  it("can handle three short VODs in a row", async () => {
     const assetMgr = new TestAssetManager(null, [{ id: 1, title: "Short", uri: "https://maitv-vod.lab.eyevinn.technology/VINN.mp4/master.m3u8" }]);
     const session = new Session(assetMgr, { sessionId: '1' }, sessionStore);
     await verificationLoop(session, 10);
-    done();
   });
 
-  it("provides all available bitrates for all media sequences with provided channel profile", async (done) => {
+  it("provides all available bitrates for all media sequences with provided channel profile", async () => {
     const assetMgr = new TestAssetManager();
     const channelProfile = [
       { bw: 6134000, codecs: 'avc1.4d001f,mp4a.40.2', resolution: [ 1024, 458 ] },
@@ -198,10 +194,9 @@ describe("Playhead consumer", () => {
       }
     };
     await loop(100);
-    done();
   });
 
-  it("provides all available bitrates for all media sequences without provided channel profile", async (done) => {
+  it("provides all available bitrates for all media sequences without provided channel profile", async () => {
     const assetMgr = new TestAssetManager();
     const session = new Session(assetMgr, { sessionId: '1' }, sessionStore);
     await session.incrementAsync();
@@ -235,10 +230,9 @@ describe("Playhead consumer", () => {
       }
     };
     await loop(100);
-    done();
   });
 
-  it("plays all segments of a VOD before the next one", async (done) => {
+  it("plays all segments of a VOD before the next one", async () => {
     const assetMgr = new TestAssetManager();
     const session = new Session(assetMgr, { sessionId: '1' }, sessionStore);
     const expectedLastSegment = "https://maitv-vod.lab.eyevinn.technology/tearsofsteel_4k.mov/2000/2000-00091.ts";
@@ -267,10 +261,9 @@ describe("Playhead consumer", () => {
     }
     await loop(100);
     expect(found).toBe(true);
-    done();
   });
 
-  it("inserts a slate when asset manager fails to return an initial VOD", async (done) => {
+  it("inserts a slate when asset manager fails to return an initial VOD", async () => {
     const assetMgr = new TestAssetManager({ fail: true });
     const session = new Session(assetMgr, { sessionId: '1', slateUri: 'http://testcontent.eyevinn.technology/slates/ottera/playlist.m3u8' }, sessionStore);
     let slateManifest;
@@ -294,10 +287,10 @@ describe("Playhead consumer", () => {
     await loop(1);
     let m = slateManifest.match('http://testcontent.eyevinn.technology/slates/ottera/1080p_000.ts\n');
     expect(m).not.toBeNull;
-    done();
+     ;
   });
 
-  it("inserts a slate when asset manager fails to return a next VOD", async (done) => {
+  it("inserts a slate when asset manager fails to return a next VOD", async () => {
     const assetMgr = new TestAssetManager({failOnIndex: 1});
     const session = new Session(assetMgr, { sessionId: '1', slateUri: 'http://testcontent.eyevinn.technology/slates/ottera/playlist.m3u8' }, sessionStore);
     let slateManifest;
@@ -322,6 +315,6 @@ describe("Playhead consumer", () => {
     //console.log('slateManifest', slateManifest);
     let m = slateManifest.match('http://testcontent.eyevinn.technology/slates/ottera/1080p_000.ts\n');
     expect(m).not.toBeNull();
-    done();
+     ;
   });
 });

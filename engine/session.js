@@ -65,7 +65,7 @@ class Session {
       if (config.profile) {
         this._sessionProfile = config.profile;
       }
-      if (config.audioTracks) {// Added audioTracks property <------------------------------------- BEEN HERE
+      if (config.audioTracks) {
         this._audioTracks = config.audioTracks;
       }
       if (config.closedCaptions) {
@@ -261,14 +261,13 @@ class Session {
       let m3u8 = currentVod.getLiveMediaAudioSequences(
         playheadState.mediaSeq,
         audioGroupId,
-        audioLanguage,// <------------------- BEEN HERE
+        audioLanguage,
         playheadState.vodMediaSeqAudio,
         sessionState.discSeq
       );
-      // # Case: current VOD does not have the selected language.
+      // # Case: either given language or groupId aren't present in current VOD.
       if(!m3u8){
-      // # Perhaps...
-      // # Handle by fetching another language?
+        debug(`[${playbackSessionId}]: [${playheadState.mediaSeq + playheadState.vodMediaSeqAudio}] Error! Failed to retrieve current audio manifest for ID:${audioGroupId}, Lang:${audioLanguage}`);
       }
 
       debug(`[${playbackSessionId}]: [${playheadState.mediaSeq + playheadState.vodMediaSeqAudio}] Current audio manifest for ID:${audioGroupId}, Lang:${audioLanguage} requested`);
@@ -393,11 +392,11 @@ class Session {
       m3u8 = currentVod.getLiveMediaAudioSequences(
         sessionState.mediaSeq,
         audioGroupId,
-        audioLanguage,// <---------------- BEEN HERE
+        audioLanguage,
         sessionState.vodMediaSeqAudio,
         sessionState.discSeq
       );
-    } catch (exc) { // <-------------- BEEN HERE
+    } catch (exc) {
       if (sessionState.lastM3u8[audioGroupId][audioLanguage]) {
          m3u8 = sessionState.lastM3u8[audioGroupId][audioLanguage];
       } else {
@@ -405,7 +404,7 @@ class Session {
       }
     }
     let lastM3u8 = sessionState.lastM3u8;
-    lastM3u8[audioGroupId] = {}; // <-------------- BEEN HERE
+    lastM3u8[audioGroupId] = {}; 
     lastM3u8[audioGroupId][audioLanguage] = m3u8;
     sessionState = await this._sessionStateStore.set(this._sessionId, "lastM3u8", lastM3u8);
     sessionState = await this._sessionStateStore.set(this._sessionId, "tsLastRequestAudio", Date.now());
@@ -436,7 +435,6 @@ class Session {
         m3u8 += "# AUDIO groups\n";
         for (let i = 0; i < audioGroupIds.length; i++) {
           let audioGroupId = audioGroupIds[i]; 
-          // <-------------------- I'VE BEEN HERE
           // # Added nested loop to iterate through 
           // # pre-set languages(_audioTracks) by channelMgr.
           for (let j = 0; j < this._audioTracks.length; j++) {
@@ -465,8 +463,7 @@ class Session {
         m3u8 += "master" + profile.bw + ".m3u8;session=" + this._sessionId + "\n";
       });
     }
-    // - This part makes back-up uri in StreamItem? In case above audio tracks are missing uri attribute? 
-    // <----------------------------------- I'VE BEEN HERE
+    // This part makes back-up uri in StreamItem. In case above audio tracks are missing uri attribute? 
     // # Added nested loop to iterate through 
     // # pre-set languages(_audioTracks) by channelMgr.
     if (this.use_demuxed_audio === true) {

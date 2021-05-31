@@ -58,6 +58,8 @@ class RefChannelManager {
       {
         id: "1",
         profile: this._getProfile(),
+
+        // # Uncomment if using demuxed audio.
         audioTracks: this._getAudioTracks(),
       },
     ];
@@ -71,6 +73,7 @@ class RefChannelManager {
     ];
   }
 
+  // # Uncomment if using demuxed audio.
   _getAudioTracks() {
     return [
       { language: "en", name: "English", default: true  },

@@ -76,10 +76,10 @@ class ChannelEngine {
         req.params[1] = m[2];
         await this._handleMediaManifest(req, res, next);
       } else if (
-        (m = req.params.file.match(/master-(\S+)_(\S+).m3u8;session=(.*)$/)) // <--------------- BEEN HERE
+        (m = req.params.file.match(/master-(\S+)_(\S+).m3u8;session=(.*)$/))
       ) {
         req.params[0] = m[1];
-        req.params[1] = m[2]; // Added parameter for language value <--------------- BEEN HERE
+        req.params[1] = m[2]; // Added parameter for language value
         req.params[2] = m[3];
         await this._handleAudioManifest(req, res, next);
       }
@@ -110,7 +110,7 @@ class ChannelEngine {
         playheadDiffThreshold: channel.options && channel.options.playheadDiffThreshold ? channel.options.playheadDiffThreshold : this.streamerOpts.defaultPlayheadDiffThreshold,
         maxTickInterval: channel.options && channel.options.maxTickInterval ? channel.options.maxTickInterval : this.streamerOpts.defaultMaxTickInterval,
         profile: channel.profile,
-        audioTracks: channel.audioTracks, // <--------------------------------- BEEN HERE
+        audioTracks: channel.audioTracks,
         closedCaptions: channel.closedCaptions,
         slateUri: channel.slate && channel.slate.uri ? channel.slate.uri : this.defaultSlateUri,
         slateRepetitions: channel.slate && channel.slate.repetitions ? channel.slate.repetitions : this.slateRepetitions,
@@ -266,7 +266,7 @@ class ChannelEngine {
       try {
         const body = await session.getCurrentAudioManifestAsync(
           req.params[0],
-          req.params[1], // Also pass on language value <------------------------- BEEN HERE
+          req.params[1], // Also pass on language value
           req.headers["x-playback-session-id"]
         );
         //verbose(`[${session.sessionId}] body=`);
